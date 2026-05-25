@@ -139,6 +139,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // The manifest bytes are ours; SRI protects against CDN compromise, not this.
     template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
 
+    // Pinterest Checkout Tracking for Gumroad links
+    template = template.replace(/href="https:\/\/trendswave\.gumroad\.com\/l\/bloatedbelly-fix"/g, 'href="https://trendswave.gumroad.com/l/bloatedbelly-fix" onclick="if(window.pintrk){pintrk(\'track\', \'checkout\', {event_id: \'eventId0001\', value: 27, order_quantity: 1, currency: \'USD\'});}"');
+
     const resourceScript = '<script>window.__resources = ' +
       JSON.stringify(resourceMap).split('</' + 'script>').join('<\\/' + 'script>') +
       ';</' + 'script>';
