@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>The Bloated Belly Fix — End the Bloat in 30 Days</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,6 +39,11 @@
     src="https://ct.pinterest.com/v3/?event=init&tid=2612675636995&pd[em]=<hashed_email_address>&noscript=1" />
   </noscript>
   <!-- end Pinterest Tag -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  }
+  </script>
 </head>
 <body>
   <div id="__bundler_thumbnail">
@@ -83,23 +89,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     let template = JSON.parse(templateEl.textContent);
 
     const uuids = Object.keys(manifest);
-    setStatus('Unpacking ' + uuids.length + ' assets...');
+    let decoded = 0;
+    setStatus('Unpacking 0 / ' + uuids.length + '...');
 
     const blobUrls = {};
     await Promise.all(uuids.map(async (uuid) => {
       const entry = manifest[uuid];
       try {
-        const binaryStr = atob(entry.data);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-
-        let finalBytes = bytes;
+        let bytes;
         if (entry.compressed) {
+          // Decode base64 via native fetch — far faster than a charCodeAt loop
+          const resp = await fetch('data:application/octet-stream;base64,' + entry.data);
+          const raw = new Uint8Array(await resp.arrayBuffer());
           if (typeof DecompressionStream !== 'undefined') {
             const ds = new DecompressionStream('gzip');
             const writer = ds.writable.getWriter();
             const reader = ds.readable.getReader();
-            writer.write(bytes);
+            writer.write(raw);
             writer.close();
             const chunks = [];
             let totalLen = 0;
@@ -109,19 +115,25 @@ document.addEventListener('DOMContentLoaded', async function() {
               chunks.push(value);
               totalLen += value.length;
             }
-            finalBytes = new Uint8Array(totalLen);
+            bytes = new Uint8Array(totalLen);
             let offset = 0;
-            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
+            for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
           } else {
             console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
+            bytes = raw;
           }
+        } else {
+          // Native base64 decode — 10-50x faster than JS charCodeAt loop
+          const resp = await fetch('data:' + entry.mime + ';base64,' + entry.data);
+          bytes = new Uint8Array(await resp.arrayBuffer());
         }
-
-        blobUrls[uuid] = URL.createObjectURL(new Blob([finalBytes], { type: entry.mime }));
+        blobUrls[uuid] = URL.createObjectURL(new Blob([bytes], { type: entry.mime }));
       } catch (err) {
         console.error('Failed to decode asset ' + uuid + ':', err);
         blobUrls[uuid] = URL.createObjectURL(new Blob([], { type: entry.mime }));
       }
+      decoded++;
+      setStatus('Unpacking ' + decoded + ' / ' + uuids.length + '...');
     }));
 
     const extResEl = document.querySelector('script[type="__bundler/ext_resources"]');
@@ -132,7 +144,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     setStatus('Rendering...');
-    for (const uuid of uuids) template = template.split(uuid).join(blobUrls[uuid]);
+    const uuidRe = new RegExp(uuids.join('|'), 'g');
+    template = template.replace(uuidRe, id => blobUrls[id] || id);
 
     // Strip integrity + crossorigin — blob URLs from a file:// document inherit
     // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
