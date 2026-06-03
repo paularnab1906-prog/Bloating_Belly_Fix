@@ -1,4 +1,4 @@
-const CACHE = 'bbf-v1';
+const CACHE = 'bbf-v2';
 const SHELL = ['/index.html', '/'];
 
 // On install: cache the main page immediately
@@ -9,7 +9,7 @@ self.addEventListener('install', e => {
 });
 
 self.addEventListener('activate', e => {
-  // Remove old cache versions
+  // Remove old cache versions (bbf-v1 and any others)
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
@@ -23,17 +23,16 @@ self.addEventListener('fetch', e => {
   // Only cache same-origin GET requests
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Stale-while-revalidate for the main HTML (serve cache instantly, update in background)
+  // Network-first for main HTML — always fetch fresh from server so tracking
+  // code updates and pixel changes are never served from stale cache.
   if (url.pathname === '/' || url.pathname === '/index.html') {
     e.respondWith(
-      caches.open(CACHE).then(async cache => {
-        const cached = await cache.match(e.request);
-        const fresh = fetch(e.request).then(resp => {
-          if (resp.ok) cache.put(e.request, resp.clone());
+      fetch(e.request)
+        .then(resp => {
+          if (resp.ok) caches.open(CACHE).then(c => c.put(e.request, resp.clone()));
           return resp;
-        }).catch(() => null);
-        return cached || fresh;
-      })
+        })
+        .catch(() => caches.match(e.request))
     );
     return;
   }

@@ -209,12 +209,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     // We deferred this because the HTML spec aborts async scripts whose element
     // is removed from the document before they finish loading — which happened
     // when the bundler swapped the old <head> away.
-    if (window.fbq && !document.querySelector('script[src*="fbevents"]')) {
-      var fbS = document.createElement('script');
-      fbS.async = true;
-      fbS.src = 'https://connect.facebook.net/en_US/fbevents.js';
-      document.head.appendChild(fbS);
-    }
+    (function loadFbEvents() {
+      if (!window.fbq || document.querySelector('script[src*="fbevents"]')) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      (document.head || document.documentElement).appendChild(s);
+    })();
   } catch (err) {
     setStatus('Error unpacking: ' + err.message);
     console.error('Bundle unpack error:', err);
