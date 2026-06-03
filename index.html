@@ -34,14 +34,11 @@
     src="https://ct.pinterest.com/v3/?event=init&tid=2612675636995&pd[em]=<hashed_email_address>&noscript=1" />
   </noscript>
   <!-- end Pinterest Tag -->
-  <!-- Facebook Pixel — queue setup only; fbevents.js is loaded after replaceWith
-       so the async script is not dropped when the bundler swaps the document. -->
+  <!-- Facebook Pixel — queue stub only; fbevents.js is injected after the
+       bundler replaceWith so the async script is never dropped from the DOM.
+       init/PageView/ViewContent fire in the onload callback. -->
   <script>
-  !function(f,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);
-  fbq('init','1452455895550114');
-  fbq('track','PageView');
+  if(!window.fbq){window._fbq=window.fbq=function(){(window.fbq.q=window.fbq.q||[]).push(arguments)};window.fbq.q=[];window.fbq.version='2.0';}
   </script>
   <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=1452455895550114&ev=PageView&noscript=1"/></noscript>
@@ -141,17 +138,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const uuidRe = new RegExp(uuids.join('|'), 'g');
     template = template.replace(uuidRe, id => blobUrls[id] || id);
 
-    // Fire ViewContent once the real page content is about to be shown.
-    // This is what Facebook Ads counts as a "Content View".
-    if (window.fbq) {
-      fbq('track', 'ViewContent', {
-        content_name: 'The Bloated Belly Fix',
-        content_type: 'product',
-        content_ids: ['bloatedbelly-fix'],
-        value: 27.00,
-        currency: 'USD'
-      });
-    }
+
 
     // Strip integrity + crossorigin — blob URLs from a file:// document inherit
     // a null origin, so crossorigin forces a CORS fetch that SRI then rejects.
@@ -205,15 +192,24 @@ document.addEventListener('DOMContentLoaded', async function() {
       window.Babel.transformScriptTags();
     }
 
-    // Load fbevents.js into the new stable document now that replaceWith is done.
-    // We deferred this because the HTML spec aborts async scripts whose element
-    // is removed from the document before they finish loading — which happened
-    // when the bundler swapped the old <head> away.
-    (function loadFbEvents() {
-      if (!window.fbq || document.querySelector('script[src*="fbevents"]')) return;
+    // Inject fbevents.js into the new stable document and fire all pixel events
+    // in the onload callback — guarantees events fire after fbevents.js is ready
+    // and after the Meta Pixel Helper extension has set up its interceptors.
+    (function() {
+      if (document.querySelector('script[src*="fbevents"]')) return;
       var s = document.createElement('script');
-      s.async = true;
       s.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      s.onload = function() {
+        fbq('init', '1452455895550114');
+        fbq('track', 'PageView');
+        fbq('track', 'ViewContent', {
+          content_name: 'The Bloated Belly Fix',
+          content_type: 'product',
+          content_ids: ['bloatedbelly-fix'],
+          value: 27.00,
+          currency: 'USD'
+        });
+      };
       (document.head || document.documentElement).appendChild(s);
     })();
   } catch (err) {
