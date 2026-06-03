@@ -34,6 +34,19 @@
     src="https://ct.pinterest.com/v3/?event=init&tid=2612675636995&pd[em]=<hashed_email_address>&noscript=1" />
   </noscript>
   <!-- end Pinterest Tag -->
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+  (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init','1452455895550114');
+  fbq('track','PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=1452455895550114&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
   <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(function(){});
@@ -135,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
 
     // Pinterest Checkout Tracking for Gumroad links
-    template = template.replace(/href="https:\/\/trendswave\.gumroad\.com\/l\/bloatedbelly-fix"/g, 'href="https://trendswave.gumroad.com/l/bloatedbelly-fix" onclick="if(window.pintrk){pintrk(\'track\', \'checkout\', {event_id: \'eventId0001\', value: 27, order_quantity: 1, currency: \'USD\'});}"');
+    template = template.replace(/href="https:\/\/trendswave\.gumroad\.com\/l\/bloatedbelly-fix"/g, 'href="https://trendswave.gumroad.com/l/bloatedbelly-fix" onclick="if(window.pintrk){pintrk(\'track\', \'checkout\', {event_id: \'eventId0001\', value: 27, order_quantity: 1, currency: \'USD\'});}if(window.fbq){fbq(\'track\', \'InitiateCheckout\');}"');
 
     const resourceScript = '<script>window.__resources = ' +
       JSON.stringify(resourceMap).split('</' + 'script>').join('<\\/' + 'script>') +
