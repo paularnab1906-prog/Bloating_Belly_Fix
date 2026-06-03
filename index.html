@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(/\s+integrity="[^"]*"/gi, '').replace(/\s+crossorigin="[^"]*"/gi, '');
 
     // Pinterest Checkout Tracking for Gumroad links
-    template = template.replace(/href="https:\/\/trendswave\.gumroad\.com\/l\/bloatedbelly-fix"/g, 'href="https://trendswave.gumroad.com/l/bloatedbelly-fix" onclick="if(window.pintrk){pintrk(\'track\', \'checkout\', {event_id: \'eventId0001\', value: 27, order_quantity: 1, currency: \'USD\'});}if(window.fbq){fbq(\'track\', \'InitiateCheckout\');}"');
+    template = template.replace(/href="https:\/\/trendswave\.gumroad\.com\/l\/bloatedbelly-fix"/g, 'href="https://trendswave.gumroad.com/l/bloatedbelly-fix" onclick="if(window.pintrk){pintrk(\'track\', \'checkout\', {event_id: \'eventId0001\', value: 27, order_quantity: 1, currency: \'USD\'});}if(window.fbq){fbq(\'track\', \'InitiateCheckout\', {value:27.00,currency:\'USD\',num_items:1});}"');
 
     const resourceScript = '<script>window.__resources = ' +
       JSON.stringify(resourceMap).split('</' + 'script>').join('<\\/' + 'script>') +
