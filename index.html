@@ -34,13 +34,12 @@
     src="https://ct.pinterest.com/v3/?event=init&tid=2612675636995&pd[em]=<hashed_email_address>&noscript=1" />
   </noscript>
   <!-- end Pinterest Tag -->
-  <!-- Facebook Pixel -->
+  <!-- Facebook Pixel — queue setup only; fbevents.js is loaded after replaceWith
+       so the async script is not dropped when the bundler swaps the document. -->
   <script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-  (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  !function(f,n){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[]}(window);
   fbq('init','1452455895550114');
   fbq('track','PageView');
   </script>
@@ -204,6 +203,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     // which fired before we swapped the document. Trigger manually if present.
     if (window.Babel && typeof window.Babel.transformScriptTags === 'function') {
       window.Babel.transformScriptTags();
+    }
+
+    // Load fbevents.js into the new stable document now that replaceWith is done.
+    // We deferred this because the HTML spec aborts async scripts whose element
+    // is removed from the document before they finish loading — which happened
+    // when the bundler swapped the old <head> away.
+    if (window.fbq && !document.querySelector('script[src*="fbevents"]')) {
+      var fbS = document.createElement('script');
+      fbS.async = true;
+      fbS.src = 'https://connect.facebook.net/en_US/fbevents.js';
+      document.head.appendChild(fbS);
     }
   } catch (err) {
     setStatus('Error unpacking: ' + err.message);
